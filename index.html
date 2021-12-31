@@ -1,0 +1,87 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<style>
+video {
+  width: 300px;
+  height: 240px;
+}
+body {
+  background-color: black;
+  color: gray;
+  text-align: center;
+}
+#qrdiv {
+  margin: 1em;
+  padding: 1em;
+  background-color: gray;
+}
+</style>
+
+<!--
+
+<video id="remotevideo" playsinline></video>
+<video id="localvideo" playsinline></video><br>
+<button id=btn>connect</button>
+-->
+<h1>remotecam</h1>
+<div id="qrdiv"></div>
+
+<script src="https://unpkg.com/@open-ayame/ayame-web-sdk@2020.2.1/dist/ayame.min.js"></script>
+<script type="module">
+import { UUID } from "https://js.sabae.cc/UUID.js";
+import { QRCode } from "https://js.sabae.cc/QRCode.js";
+
+const endpoint = "wss://ayame-labo.shiguredo.jp/signaling";
+const roomname = "code4fukui-remotecam-" + UUID.generate();
+
+onload = async () => {
+  const video = true;
+  const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video });
+  //localvideo.srcObject = mediaStream;
+  //localvideo.play();
+
+  const url = "https://code4fukui.github.io/remotecam/monitor.html#" + roomname;
+  qrdiv.appendChild(new QRCode(url));
+
+  let conn = null;
+  const startConn = async () => {
+    conn = Ayame.connection(endpoint, roomname);
+    conn.options.video.direction = "sendonly";
+    conn.options.audio.direction = "sendonly";
+    try {
+      await conn.connect(mediaStream);
+      console.log("con");
+      conn.on('disconnect', async (e) => {
+        console.log("disc", e);
+        await conn.disconnect();
+        conn = null;
+        // retry to connect
+        startConn();
+      });
+      conn.on('addstream', (e) => {
+        console.log("adds", e);
+        if (e.track.kind == "video") {
+          remotevideo.srcObject = e.stream;
+          remotevideo.play();
+        } else if (e.track.kind == "audio") {
+          // ??
+        }
+      });
+    } catch (e) {
+      console.log("can't connect");
+      setTimeout(startConn, 100);
+    }
+  };
+  const onoff = () => {
+    if (!conn) {
+      console.log("start");
+      startConn();
+    } else {
+      conn.disconnect();
+      conn = null;
+    }
+  };
+  onoff();
+};
+</script>

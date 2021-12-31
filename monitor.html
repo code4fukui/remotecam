@@ -1,0 +1,62 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<style>
+video {
+  width: 100vw;
+  height: 56.25vw;
+}
+</style>
+
+<video id="remotevideo" playsinline></video>
+
+<script src="https://unpkg.com/@open-ayame/ayame-web-sdk@2020.2.1/dist/ayame.min.js"></script>
+<script type="module">
+
+const endpoint = "wss://ayame-labo.shiguredo.jp/signaling";
+
+onload = async () => {
+  const hash = document.location.hash.subsring(1);
+  if (!hash) {
+    alert("no room name");
+    return;
+  }
+  const roomname = hash;
+
+  let conn = null;
+  const startConn = async () => {
+    conn = Ayame.connection(endpoint, roomname);
+    conn.options.video.direction = "recvonly";
+    conn.options.audio.direction = "recvonly";
+    await conn.connect();
+    console.log("con");
+    conn.on('disconnect', async (e) => {
+      console.log("disc", e);
+      //btn.textContent = "connect";
+      await conn.disconnect();
+      conn = null;
+      // retry to connect
+      startConn();
+    });
+    conn.on('addstream', (e) => {
+      console.log("adds", e);
+      if (e.track.kind == "video") {
+        remotevideo.srcObject = e.stream;
+        remotevideo.play();
+        //btn.textContent = "connected";
+      } else if (e.track.kind == "audio") {
+        // ??
+      }
+    });
+  };
+  const onoff = () => {
+    if (!conn) {
+      console.log("start");
+      startConn();
+      //btn.textContent = "connecting...";
+    } else {
+      conn.disconnect();
+      conn = null;
+    }
+  };
+  onoff();
+};
+</script>
