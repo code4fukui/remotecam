@@ -14,7 +14,7 @@ video {
 const endpoint = "wss://ayame-labo.shiguredo.jp/signaling";
 
 onload = async () => {
-  const hash = document.location.hash.subsring(1);
+  const hash = document.location.hash.substring(1);
   if (!hash) {
     alert("no room name");
     return;
