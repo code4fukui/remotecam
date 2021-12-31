@@ -1,12 +1,21 @@
 <!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
 <style>
+body {
+  text-align: center;
+}
 video {
   width: 100vw;
   height: 56.25vw;
+  margin: 1em 0;
+}
+button {
+  padding: 1em;
 }
 </style>
 
-<video id="remotevideo" playsinline></video>
+<video id="remotevideo" playsinline></video><br>
+<button id=btn>CONNECT</button>
+
 
 <script src="https://unpkg.com/@open-ayame/ayame-web-sdk@2020.2.1/dist/ayame.min.js"></script>
 <script type="module">
@@ -16,7 +25,8 @@ const endpoint = "wss://ayame-labo.shiguredo.jp/signaling";
 onload = async () => {
   const hash = document.location.hash.substring(1);
   if (!hash) {
-    alert("no room name");
+    alert("no room name. please scan remotecam QR code.");
+    document.location = "https://code4fukui.github.io/qrreader/";
     return;
   }
   const roomname = hash;
@@ -47,7 +57,7 @@ onload = async () => {
       }
     });
   };
-  const onoff = () => {
+  btn.onclick = () => {
     if (!conn) {
       console.log("start");
       startConn();
@@ -57,6 +67,5 @@ onload = async () => {
       conn = null;
     }
   };
-  onoff();
 };
 </script>
